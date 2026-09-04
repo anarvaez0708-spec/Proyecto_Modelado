@@ -2,10 +2,10 @@ import { supabase, isSupabaseConfigured, withMockDelay } from "@/shared/lib/supa
 
 const SIMULATE_DELAY = 1500;
 
-async function mockLogin({ correo, password }) {
+async function mockLogin({ correo, password, redirectTo = "/dashboard" }) {
   return new Promise((resolve) => {
     setTimeout(() => {
-      window.location.href = "/dashboard";
+      window.location.href = redirectTo;
       resolve();
     }, SIMULATE_DELAY);
   });
@@ -42,17 +42,17 @@ async function mockRegister(payload) {
 }
 
 export const authServices = {
-  login: async ({ correo, password }) => {
+  login: async ({ correo, password, redirectTo = "/dashboard" }) => {
     if (isSupabaseConfigured) {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: correo,
         password: password,
       });
       if (error) throw error;
-      window.location.href = "/dashboard";
+      window.location.href = redirectTo;
       return data;
     }
-    return mockLogin({ correo, password });
+    return mockLogin({ correo, password, redirectTo });
   },
 
   register: async (payload) => {

@@ -1,11 +1,14 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import {
-  mockReservas,
+  getStoredReservas,
   mockClientes,
   emptyBookingForm,
   bookingServices,
+  persistStoredReservas,
+  SALIDA_OPTIONS,
 } from "../bookingServices";
+import { mockSalidasTour } from "@/features/admin/tours/tourServices";
 import { useSearchFilter } from "@/features/admin/hooks/useSearchFilter";
 import { useCrudState } from "@/features/admin/hooks/useCrudState";
 import { useDialogs } from "@/features/admin/hooks/useDialogs";
@@ -78,8 +81,41 @@ function mergeFlatToBookingForm(flat) {
 }
 
 export function useBookingsPage() {
-  const flatInitial = Array.isArray(mockReservas) ? mockReservas.map(flattenReserva) : [];
-  const crud = useCrudState(flatInitial, { name: "Reserva" });
+  const flatInitial = getStoredReservas().map(flattenReserva);
+  const crud = useCrudState(flatInitial, {
+    name: "Reserva",
+    idKey: "id_reserva",
+    onItemsChange: (nextItems) => {
+      persistStoredReservas(
+        nextItems.map((item) => ({
+          id_reserva: item.id_reserva ?? item.id,
+          id_turista: item.id_turista ?? null,
+          id_salida: item.id_salida ?? null,
+          codigo_reserva: item.codigo_reserva ?? "",
+          fecha_reserva: item.fecha_reserva ?? "",
+          fecha_cancelacion: item.fecha_cancelacion ?? null,
+          cantidad_adultos: item.cantidad_adultos ?? 0,
+          cantidad_ninos: item.cantidad_ninos ?? 0,
+          precio_unitario: item.precio_unitario ?? 0,
+          descuento: item.descuento ?? 0,
+          subtotal: item.subtotal ?? 0,
+          total: item.total ?? 0,
+          estado: item.estado ?? item.status ?? "PENDIENTE",
+          motivo_cancelacion: item.motivo_cancelacion ?? null,
+          observaciones: item.observaciones ?? "",
+          turista_nombre: item.turista_nombre ?? item.customer ?? "Turista",
+          turista_correo: item.turista_correo ?? item.email ?? "",
+          turista_telefono: item.turista_telefono ?? item.phone ?? "",
+          salida_tour_nombre: item.salida_tour_nombre ?? item.tour ?? "",
+          salida_fecha: item.salida_fecha ?? item.date ?? "",
+          salida_hora: item.salida_hora ?? item.time ?? "",
+          salida_cupos_disponibles: item.salida_cupos_disponibles ?? 0,
+          guia_nombre: item.guia_nombre ?? item.guide ?? "",
+          participantes: item.participantes ?? [],
+        }))
+      );
+    },
+  });
   const dialogs = useDialogs();
   const [formData, setFormData] = useState(emptyBookingForm);
   const [filters, setFilters] = useState({
@@ -226,6 +262,35 @@ export function useBookingsPage() {
     bookingServices.exportCSV(search.filteredData);
     toast.success("Datos exportados a CSV");
   }, [search]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const shouldCreate = params.get("create") === "1";
+    const selectedTourId = Number(params.get("tourId"));
+    if (!shouldCreate || !selectedTourId) return;
+
+    const matchingSalidaBase = mockSalidasTour.find(
+      (salida) => Number(salida.id_tour) === selectedTourId
+    );
+    const matchingSalida = matchingSalidaBase
+      ? SALIDA_OPTIONS.find((salida) => Number(salida.value) === Number(matchingSalidaBase.id_salida))
+      : undefined;
+
+    const prefilledForm = matchingSalida
+      ? {
+          ...emptyBookingForm,
+          id_salida: Number(matchingSalida.value),
+          precio_unitario: Number(matchingSalida.precioUnitario ?? 0),
+        }
+      : emptyBookingForm;
+
+    setFormData(prefilledForm);
+    dialogs.openCreate();
+
+    const nextUrl = `${window.location.pathname}`;
+    window.history.replaceState({}, "", nextUrl);
+  }, [dialogs]);
 
   const stats = bookingServices.computeStats(crud.items, search.filteredData.length);
   return {

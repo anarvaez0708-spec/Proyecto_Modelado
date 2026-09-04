@@ -3,36 +3,48 @@ import { toast } from "sonner";
 export function useCrudState(initialItems, options = {}) {
     const [items, setItems] = useState(initialItems);
     const label = options.name ?? "Elemento";
+    const idKey = options.idKey ?? "id";
+    const getItemId = (item) => item?.[idKey] ?? item?.id;
     const handleCreate = (newItemData) => {
         const now = new Date().toISOString().split("T")[0];
-        const nextId = items.length > 0 ? Math.max(...items.map((u) => u.id)) + 1 : 1;
+        const numericIds = items
+            .map((item) => Number(getItemId(item)))
+            .filter((value) => Number.isFinite(value));
+        const nextId = numericIds.length > 0 ? Math.max(...numericIds) + 1 : 1;
         const newItem = {
-            id: nextId,
+            ...(idKey !== "id" ? { id: nextId } : {}),
+            [idKey]: nextId,
             createdAt: now,
             creado_en: now,
             ...newItemData,
         };
-        setItems([...items, newItem]);
+        const nextItems = [...items, newItem];
+        setItems(nextItems);
+        options.onItemsChange?.(nextItems);
         toast.success(options.onCreateMessage?.(newItem) ?? `${label} creado exitosamente`);
         return newItem;
     };
     const handleEdit = (id, updates) => {
-        setItems(items.map((item) => (item.id === id ? { ...item, ...updates } : item)));
-        const updated = items.find((i) => i.id === id);
+        const nextItems = items.map((item) => (String(getItemId(item)) === String(id) ? { ...item, ...updates } : item));
+        setItems(nextItems);
+        options.onItemsChange?.(nextItems);
+        const updated = nextItems.find((item) => String(getItemId(item)) === String(id));
         if (updated) {
             toast.success(options.onEditMessage?.(updated) ?? `${label} actualizado exitosamente`);
         }
     };
     const handleDelete = (id) => {
-        const found = items.find((i) => i.id === id);
-        setItems(items.filter((item) => item.id !== id));
+        const found = items.find((item) => String(getItemId(item)) === String(id));
+        const nextItems = items.filter((item) => String(getItemId(item)) !== String(id));
+        setItems(nextItems);
+        options.onItemsChange?.(nextItems);
         if (found) {
             toast.success(options.onDeleteMessage?.(found) ?? `${label} eliminado exitosamente`);
         }
     };
     const handleToggleStatus = (id, statusKey = "status") => {
-        setItems(items.map((item) => {
-            if (item.id !== id)
+        const nextItems = items.map((item) => {
+            if (String(getItemId(item)) !== String(id))
                 return item;
             const current = item[statusKey];
             let newValue;
@@ -63,7 +75,9 @@ export function useCrudState(initialItems, options = {}) {
             toast.success(options.onToggleMessage?.(updated, newValue) ??
                 `${label} ${actionLabel} exitosamente`);
             return updated;
-        }));
+        });
+        setItems(nextItems);
+        options.onItemsChange?.(nextItems);
     };
     return {
         items,

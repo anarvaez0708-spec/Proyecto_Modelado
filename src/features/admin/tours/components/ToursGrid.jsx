@@ -21,7 +21,8 @@ import {
 import { Label } from "@/shared/components/ui/label";
 import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
-import { mockCategoriasTour } from "../tourServices";
+import { ImageWithFallback } from "@/shared/components/figma/ImageWithFallback";
+import { getTourImageUrl, mockCategoriasTour } from "../tourServices";
 import { ESTADO_TOUR_OPTIONS } from "@/shared/constants/dbEnums";
 
 const tourStatusMap = ESTADO_TOUR_OPTIONS.reduce((acc, opt) => {
@@ -69,14 +70,14 @@ export function ToursGrid({ tours, onDetail }) {
                 const dificultad = tour.dificultad;
                 return (
                     <Card key={id} className="overflow-hidden">
-                        <div
-                            className="h-40 w-full bg-cover bg-center"
-                            style={{
-                                backgroundImage: `url(https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=${encodeURIComponent(
-                                    `Medellín Colombia ${nombre} tour view, scenic landscape, daylight, photography`
-                                )}&image_size=landscape_16_9)`,
-                            }}
-                        />
+                        <div className="h-40 w-full overflow-hidden bg-muted">
+                            <ImageWithFallback
+                                src={getTourImageUrl(tour)}
+                                alt={nombre}
+                                loading="lazy"
+                                className="h-full w-full object-cover"
+                            />
+                        </div>
                         <CardHeader>
                             <div className="flex items-center justify-between">
                                 <Badge variant="secondary">

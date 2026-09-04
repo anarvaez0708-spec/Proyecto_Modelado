@@ -11,7 +11,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
 import { Separator } from "@/shared/components/ui/separator";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/shared/components/ui/form";
-import { TIPO_DOCUMENTO_OPTIONS, GENERO_OPTIONS, ESTADO_USUARIO_OPTIONS } from "@/shared/constants/dbEnums";
+import { TIPO_DOCUMENTO_OPTIONS, GENERO_OPTIONS, ESTADO_USUARIO_OPTIONS, NATIONALITY_OPTIONS } from "@/shared/constants/dbEnums";
 import { clientSchema } from "../validations/clientValidation";
 
 function SectionTitle({ title, subtitle, icon }) {
@@ -269,10 +269,26 @@ export function ClientCreateEditDialog({ open, onOpenChange, formData, setFormDa
                 name="nacionalidad"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nacionalidad</FormLabel>
-                    <FormControl>
-                      <Input {...field} value={field.value ?? ""} placeholder="Colombia" />
-                    </FormControl>
+                    <FormLabel>Nacionalidad (opcional)</FormLabel>
+                    <Select
+                      onValueChange={(value) => field.onChange(value === "__empty__" ? "" : value)}
+                      defaultValue={field.value || "__empty__"}
+                      value={field.value || "__empty__"}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccione una nacionalidad" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="__empty__">Sin seleccionar</SelectItem>
+                        {NATIONALITY_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

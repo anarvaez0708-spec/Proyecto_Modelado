@@ -27,6 +27,7 @@ import {
 import {
   TIPO_DOCUMENTO_OPTIONS,
   GENERO_OPTIONS,
+  NATIONALITY_OPTIONS,
 } from "@/shared/constants/dbEnums";
 
 function PasswordHint({ ok, children }) {
@@ -249,10 +250,26 @@ export function RegisterPage() {
             name="nacionalidad"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nacionalidad</FormLabel>
-                <FormControl>
-                  <Input placeholder="Colombiano" {...field} />
-                </FormControl>
+                <FormLabel>Nacionalidad (opcional)</FormLabel>
+                <Select
+                  onValueChange={(value) => field.onChange(value === "__empty__" ? "" : value)}
+                  defaultValue={field.value || "__empty__"}
+                  value={field.value || "__empty__"}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccione una nacionalidad" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="__empty__">Sin seleccionar</SelectItem>
+                    {NATIONALITY_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}

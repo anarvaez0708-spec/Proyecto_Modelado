@@ -26,6 +26,21 @@ export const GENERO_OPTIONS = [
   { value: "PREFIERE_NO_DECIR", label: "Prefiere no decir" },
 ];
 
+export const NATIONALITY_OPTIONS = [
+  { value: "Colombia", label: "Colombia" },
+  { value: "Estados Unidos", label: "Estados Unidos" },
+  { value: "México", label: "México" },
+  { value: "Argentina", label: "Argentina" },
+  { value: "Brasil", label: "Brasil" },
+  { value: "Chile", label: "Chile" },
+  { value: "España", label: "España" },
+  { value: "Italia", label: "Italia" },
+  { value: "Alemania", label: "Alemania" },
+  { value: "Reino Unido", label: "Reino Unido" },
+  { value: "Canadá", label: "Canadá" },
+  { value: "Francia", label: "Francia" },
+];
+
 export const NIVEL_IDIOMA_ENUM = ["NATIVO", "AVANZADO", "INTERMEDIO", "BASICO"];
 export const NIVEL_IDIOMA_OPTIONS = [
   { value: "NATIVO", label: "Nativo" },
@@ -111,4 +126,3 @@ export const METODO_PAGO_OPTIONS = [
   { value: 4, label: "Transferencia Bancaria", code: "TRANSFERENCIA" },
   { value: 5, label: "PSE", code: "PSE" },
 ];
-

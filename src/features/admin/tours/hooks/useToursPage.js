@@ -2,12 +2,14 @@ import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import {
     mockTours,
+    getStoredTours,
     mockCategoriasTour,
     mockSalidasTour,
     emptyTourForm,
     emptyTourTypeForm,
     emptyGroupForm,
     tourServices,
+    persistStoredTours,
     TOUR_STATUS_OPTIONS,
     SALIDA_STATUS_OPTIONS,
 } from "../tourServices";
@@ -19,7 +21,11 @@ import { useSortableTable } from "@/features/admin/hooks/useSortableTable";
 import { mockGuides } from "@/features/admin/guias/guideServices";
 
 export function useToursPage() {
-    const crud = useCrudState(mockTours, { name: "Tour" });
+    const crud = useCrudState(getStoredTours(), {
+        name: "Tour",
+        idKey: "id_tour",
+        onItemsChange: persistStoredTours,
+    });
     const dialogs = useDialogs();
     const [formData, setFormData] = useState(emptyTourForm);
     const [filters, setFilters] = useState({

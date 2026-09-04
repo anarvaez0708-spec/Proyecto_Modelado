@@ -1,6 +1,8 @@
 import { supabase, isSupabaseConfigured, withMockDelay } from "@/shared/lib/supabase";
 import { ESTADO_TOUR_OPTIONS, ESTADO_SALIDA_OPTIONS } from "@/shared/constants/dbEnums";
 
+const TOURS_STORAGE_KEY = "artetours_mock_tours";
+
 export const mockCategoriasTour = [
     {
         id_categoria: 1,
@@ -50,6 +52,7 @@ export const mockTours = [
     {
         id_tour: 1,
         nombre: "Comuna 13 Tour",
+        imagen_url: "https://images.unsplash.com/photo-1693669029454-ab14dd80faaa?w=800&h=500&fit=crop&auto=format",
         id_categoria: 1,
         duracion_horas: 3,
         capacidad_maxima: 12,
@@ -72,6 +75,7 @@ export const mockTours = [
     {
         id_tour: 2,
         nombre: "City Tour Clásico",
+        imagen_url: "https://images.unsplash.com/photo-1665419381995-0154f249f41f?w=800&h=500&fit=crop&auto=format",
         id_categoria: 2,
         duracion_horas: 4,
         capacidad_maxima: 15,
@@ -116,6 +120,7 @@ export const mockTours = [
     {
         id_tour: 4,
         nombre: "Food Tour San Joaquín",
+        imagen_url: "https://images.unsplash.com/photo-1723693407562-bb4fcae76797?w=800&h=500&fit=crop&auto=format",
         id_categoria: 4,
         duracion_horas: 3.5,
         capacidad_maxima: 8,
@@ -160,6 +165,7 @@ export const mockTours = [
     {
         id_tour: 6,
         nombre: "Grafiti Tour Comuna 13",
+        imagen_url: "https://images.unsplash.com/photo-1693669029454-ab14dd80faaa?w=800&h=500&fit=crop&auto=format",
         id_categoria: 6,
         duracion_horas: 2,
         capacidad_maxima: 10,
@@ -180,6 +186,38 @@ export const mockTours = [
         politica_cancelacion: "24h antes: reembolso completo.",
     },
 ];
+
+function syncMockTours(nextTours) {
+    mockTours.splice(0, mockTours.length, ...nextTours);
+}
+
+export function getStoredTours() {
+    if (typeof window === "undefined" || isSupabaseConfigured) {
+        return [...mockTours];
+    }
+    try {
+        const raw = window.localStorage.getItem(TOURS_STORAGE_KEY);
+        if (!raw) {
+            return [...mockTours];
+        }
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) {
+            return [...mockTours];
+        }
+        syncMockTours(parsed);
+        return [...parsed];
+    } catch {
+        return [...mockTours];
+    }
+}
+
+export function persistStoredTours(nextTours) {
+    syncMockTours(nextTours);
+    if (typeof window === "undefined" || isSupabaseConfigured) {
+        return;
+    }
+    window.localStorage.setItem(TOURS_STORAGE_KEY, JSON.stringify(nextTours));
+}
 
 export const mockSalidasTour = [
     {
@@ -256,6 +294,14 @@ export const mockSalidasTour = [
     },
 ];
 
+export const mockResenasTour = [
+    {
+        id_resena: 1,
+        id_tour: 1,
+        calificacion: 5,
+    },
+];
+
 export const emptyTourForm = {
     nombre: "",
     id_categoria: null,
@@ -305,6 +351,32 @@ export const TOUR_STATUS_OPTIONS = [
     { value: "all", label: "Todos" },
     ...ESTADO_TOUR_OPTIONS,
 ];
+
+export function getTourImageUrl(tour) {
+    if (!tour) return "";
+    if (tour.imagen_url) return tour.imagen_url;
+    if (tour.image_url) return tour.image_url;
+    if (tour.foto_url) return tour.foto_url;
+    if (Array.isArray(tour.tour_imagenes) && tour.tour_imagenes.length > 0) {
+        const principal = tour.tour_imagenes.find((image) => image.principal);
+        const candidate = principal ?? tour.tour_imagenes[0];
+        return candidate?.url ?? candidate?.imagen_url ?? candidate?.foto_url ?? "";
+    }
+    return "";
+}
+
+export function getTourReviewStats(tourId) {
+    const currentTourId = Number(tourId);
+    const reviews = (mockResenasTour ?? []).filter((review) => Number(review.id_tour) === currentTourId);
+    if (reviews.length === 0) {
+        return { rating: null, reviews: 0 };
+    }
+    const total = reviews.reduce((sum, review) => sum + Number(review.calificacion ?? 0), 0);
+    return {
+        rating: Number((total / reviews.length).toFixed(1)),
+        reviews: reviews.length,
+    };
+}
 
 export const tourServices = {
     async fetchTours() {

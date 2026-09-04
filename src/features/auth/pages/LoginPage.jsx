@@ -20,6 +20,11 @@ import { Input } from "@/shared/components/ui/input";
 import { Building2 } from "lucide-react";
 
 export function LoginPage() {
+  const redirectTo =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("redirect") || "/dashboard"
+      : "/dashboard";
+
   const form = useForm({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -36,6 +41,7 @@ export function LoginPage() {
       authServices.login({
         correo: data.email.toLowerCase(),
         password: data.password,
+        redirectTo,
       })
     );
   };

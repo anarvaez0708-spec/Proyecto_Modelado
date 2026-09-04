@@ -1,8 +1,10 @@
 import { supabase, isSupabaseConfigured, withMockDelay } from "@/shared/lib/supabase";
-import { ESTADO_RESERVA_OPTIONS, ESTADO_USUARIO_OPTIONS } from "@/shared/constants/dbEnums";
+import { ESTADO_RESERVA_OPTIONS, ESTADO_USUARIO_OPTIONS, NATIONALITY_OPTIONS as SHARED_NATIONALITY_OPTIONS } from "@/shared/constants/dbEnums";
 import { mockClientes } from "@/features/admin/clientes/clientServices";
 import { mockSalidasTour, mockTours } from "@/features/admin/tours/tourServices";
 import { mockGuides } from "@/features/admin/guias/guideServices";
+
+const BOOKINGS_STORAGE_KEY = "artetours_mock_bookings";
 
 export const BOOKING_STATUS_OPTIONS = [
   { value: "all", label: "Todos los estados" },
@@ -14,20 +16,7 @@ export const CLIENT_STATUS_OPTIONS = [
   ...ESTADO_USUARIO_OPTIONS,
 ];
 
-export const NATIONALITY_OPTIONS = [
-  { value: "Colombia", label: "Colombia" },
-  { value: "USA", label: "Estados Unidos (USA)" },
-  { value: "México", label: "México" },
-  { value: "Argentina", label: "Argentina" },
-  { value: "Brasil", label: "Brasil" },
-  { value: "Chile", label: "Chile" },
-  { value: "España", label: "España" },
-  { value: "Italia", label: "Italia" },
-  { value: "Alemania", label: "Alemania" },
-  { value: "Reino Unido", label: "Reino Unido" },
-  { value: "Canadá", label: "Canadá" },
-  { value: "Francia", label: "Francia" },
-];
+export const NATIONALITY_OPTIONS = SHARED_NATIONALITY_OPTIONS;
 
 export const mockReservas = [
   {
@@ -181,6 +170,38 @@ export const mockReservas = [
     guia_nombre: "Carlos Muñoz",
   },
 ];
+
+function syncMockReservas(nextReservas) {
+  mockReservas.splice(0, mockReservas.length, ...nextReservas);
+}
+
+export function getStoredReservas() {
+  if (typeof window === "undefined" || isSupabaseConfigured) {
+    return [...mockReservas];
+  }
+  try {
+    const raw = window.localStorage.getItem(BOOKINGS_STORAGE_KEY);
+    if (!raw) {
+      return [...mockReservas];
+    }
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      return [...mockReservas];
+    }
+    syncMockReservas(parsed);
+    return [...parsed];
+  } catch {
+    return [...mockReservas];
+  }
+}
+
+export function persistStoredReservas(nextReservas) {
+  syncMockReservas(nextReservas);
+  if (typeof window === "undefined" || isSupabaseConfigured) {
+    return;
+  }
+  window.localStorage.setItem(BOOKINGS_STORAGE_KEY, JSON.stringify(nextReservas));
+}
 
 export const mockReservaParticipantes = [
   {

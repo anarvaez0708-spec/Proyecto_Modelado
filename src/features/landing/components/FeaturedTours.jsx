@@ -1,55 +1,56 @@
 import { MapPin, Star, Clock, Users, Heart, ArrowRight } from "lucide-react";
-const TOURS = [
-    {
-        id: 1,
-        name: "Tour Comuna 13",
-        img: "https://images.unsplash.com/photo-1693669029454-ab14dd80faaa?w=800&h=500&fit=crop&auto=format",
-        duration: "4 horas",
-        capacity: "15 personas",
-        price: "$85.000",
-        rating: 4.9,
-        reviews: 312,
-        badge: "Más vendido",
-        location: "Medellín",
-    },
-    {
-        id: 2,
-        name: "City Tour Medellín",
-        img: "https://images.unsplash.com/photo-1665419381995-0154f249f41f?w=800&h=500&fit=crop&auto=format",
-        duration: "6 horas",
-        capacity: "20 personas",
-        price: "$120.000",
-        rating: 4.8,
-        reviews: 214,
-        badge: "Más vendido",
-        location: "Medellín",
-    },
-    {
-        id: 3,
-        name: "Coffee Tour",
-        img: "https://images.unsplash.com/photo-1532185922611-3410b1898a1c?w=800&h=500&fit=crop&auto=format",
-        duration: "8 horas",
-        capacity: "12 personas",
-        price: "$195.000",
-        rating: 4.9,
-        reviews: 178,
-        badge: null,
-        location: "Eje Cafetero",
-    },
-    {
-        id: 4,
-        name: "Food Tour Gourmet",
-        img: "https://images.unsplash.com/photo-1723693407562-bb4fcae76797?w=800&h=500&fit=crop&auto=format",
-        duration: "3 horas",
-        capacity: "10 personas",
-        price: "$75.000",
-        rating: 4.7,
-        reviews: 96,
-        badge: null,
-        location: "Medellín",
-    },
-];
+import { ImageWithFallback } from "@/shared/components/figma/ImageWithFallback";
+import { mockReservas } from "@/features/admin/reservas/bookingServices";
+import { getTourImageUrl, getTourReviewStats, mockSalidasTour, mockTours } from "@/features/admin/tours/tourServices";
+
+function formatDuration(hours) {
+    if (hours == null || hours === "")
+        return "Duración por confirmar";
+    return `${hours} hora${Number(hours) === 1 ? "" : "s"}`;
+}
+
+function formatCapacity(capacity) {
+    if (capacity == null || capacity === "")
+        return "Capacidad por confirmar";
+    return `${capacity} personas`;
+}
+
+function buildFeaturedTours() {
+    const salidaTourMap = new Map((mockSalidasTour ?? []).map((salida) => [Number(salida.id_salida), Number(salida.id_tour)]));
+    const bookingsByTour = (mockReservas ?? []).reduce((acc, reserva) => {
+        const tourId = salidaTourMap.get(Number(reserva.id_salida));
+        if (!tourId)
+            return acc;
+        acc[tourId] = (acc[tourId] ?? 0) + 1;
+        return acc;
+    }, {});
+    const topBookings = Math.max(0, ...Object.values(bookingsByTour));
+    return (mockTours ?? [])
+        .filter((tour) => (tour.estado ?? tour.status) === "ACTIVO")
+        .map((tour) => {
+        const stats = getTourReviewStats(tour.id_tour ?? tour.id);
+        const imageUrl = getTourImageUrl(tour);
+        return {
+            id: tour.id_tour ?? tour.id,
+            name: tour.nombre ?? tour.name,
+            img: imageUrl,
+            duration: formatDuration(tour.duracion_horas ?? tour.duration),
+            capacity: formatCapacity(tour.capacidad_maxima ?? tour.capacity),
+            price: `$${Number(tour.precio_base ?? tour.price ?? 0).toLocaleString("es-CO")}`,
+            rating: stats.rating,
+            reviews: stats.reviews,
+            badge: (bookingsByTour[tour.id_tour ?? tour.id] ?? 0) === topBookings && topBookings > 0 ? "Más vendido" : null,
+            location: tour.destino ?? "Medellín",
+            bookings: bookingsByTour[tour.id_tour ?? tour.id] ?? 0,
+        };
+    })
+        .filter((tour) => Boolean(tour.img))
+        .sort((a, b) => b.bookings - a.bookings)
+        .slice(0, 4);
+}
+
 export function FeaturedTours({ liked, onToggleLike }) {
+    const tours = buildFeaturedTours();
     return (<section id="tours" className="py-20" style={{ background: "#f0faf0" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
@@ -58,9 +59,14 @@ export function FeaturedTours({ liked, onToggleLike }) {
           <p className="text-gray-500 mt-3 text-lg">Los favoritos de nuestros viajeros este mes</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {TOURS.map((tour) => (<div key={tour.id} className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group">
+          {tours.map((tour) => (<div key={tour.id} className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group">
               <div className="relative overflow-hidden" style={{ height: "200px" }}>
-                <img src={tour.img} alt={tour.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"/>
+                <ImageWithFallback
+                  src={tour.img}
+                  alt={tour.name}
+                  loading="lazy"
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
                 {tour.badge && (<span className="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-bold text-white" style={{ background: "#2E7D32" }}>
                     {tour.badge}
                   </span>)}
@@ -71,11 +77,16 @@ export function FeaturedTours({ liked, onToggleLike }) {
               <div className="p-4">
                 <div className="flex items-center gap-1 mb-1">
                   <MapPin className="w-3 h-3 text-gray-400"/>
-                  <span className="text-xs text-gray-400">{tour.location}</span>
+                  <span className="text-xs text-gray-400 truncate">{tour.location}</span>
                   <span className="ml-auto flex items-center gap-1">
-                    <Star className="w-3.5 h-3.5" style={{ color: "#FF7A00", fill: "#FF7A00" }}/>
-                    <span className="text-xs font-bold text-gray-700">{tour.rating}</span>
-                    <span className="text-xs text-gray-400">({tour.reviews})</span>
+                    <Star
+                      className="w-3.5 h-3.5"
+                      style={{ color: "#FF7A00", fill: tour.rating ? "#FF7A00" : "none" }}
+                    />
+                    <span className="text-xs font-bold text-gray-700">
+                      {tour.rating ? tour.rating : "Sin reseñas"}
+                    </span>
+                    {tour.reviews > 0 && <span className="text-xs text-gray-400">({tour.reviews})</span>}
                   </span>
                 </div>
                 <h3 className="font-bold text-gray-900 text-base mb-3">{tour.name}</h3>
@@ -88,9 +99,13 @@ export function FeaturedTours({ liked, onToggleLike }) {
                     <span className="text-xs text-gray-400">Desde</span>
                     <p className="font-bold text-lg text-gray-900">{tour.price}</p>
                   </div>
-                  <button className="px-4 py-2 text-white text-sm font-semibold rounded-xl transition-opacity duration-200 hover:opacity-90" style={{ background: "#FF7A00" }}>
+                  <a
+                    href={`/login?redirect=${encodeURIComponent(`/dashboard/bookings?create=1&tourId=${tour.id}`)}`}
+                    className="inline-flex items-center justify-center px-4 py-2 text-white text-sm font-semibold rounded-xl transition-opacity duration-200 hover:opacity-90"
+                    style={{ background: "#FF7A00" }}
+                  >
                     Reservar
-                  </button>
+                  </a>
                 </div>
               </div>
             </div>))}

@@ -65,7 +65,15 @@ export function RolesPage() {
 
       <RoleCreateDialog open={state.dialogs.isEditOpen} onOpenChange={state.dialogs.setIsEditOpen} formData={state.formData} setFormData={state.setFormData} onTogglePermission={state.togglePermission} onSubmit={state.handleEdit} isEdit/>
 
-      <RoleDetailDialog open={state.dialogs.isDetailOpen} onOpenChange={state.dialogs.setIsDetailOpen} role={state.dialogs.selectedItem}/>
+      <RoleDetailDialog
+        open={state.dialogs.isDetailOpen}
+        onOpenChange={state.dialogs.setIsDetailOpen}
+        role={state.dialogs.selectedItem}
+        onEdit={(role) => {
+          state.dialogs.setIsDetailOpen(false);
+          state.openEdit(role);
+        }}
+      />
 
       <RoleDeleteDialog open={state.dialogs.isDeleteOpen} onOpenChange={state.dialogs.setIsDeleteOpen} role={state.dialogs.selectedItem} onConfirm={state.handleDelete}/>
     </DashboardLayout>);

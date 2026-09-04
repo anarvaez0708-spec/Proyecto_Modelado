@@ -5,7 +5,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { ALL_PERMISSIONS, userServices } from "../userServices";
 
-const MODULE_LABELS = {
+export const MODULE_LABELS = {
     users: "Usuarios",
     roles: "Roles",
     tours: "Tours",
@@ -14,8 +14,8 @@ const MODULE_LABELS = {
     sales: "Ventas",
     reports: "Reportes",
 };
-const MODULE_ORDER = ["users", "roles", "tours", "bookings", "clients", "sales", "reports"];
-const ACTION_COLUMNS = [
+export const MODULE_ORDER = ["users", "roles", "tours", "bookings", "clients", "sales", "reports"];
+export const ACTION_COLUMNS = [
     { key: "view", label: "Ver" },
     { key: "create", label: "Crear" },
     { key: "edit", label: "Editar" },
@@ -23,7 +23,7 @@ const ACTION_COLUMNS = [
     { key: "export", label: "Exportar" },
 ];
 
-function buildPermissionsMatrix() {
+export function buildPermissionsMatrix() {
     const matrix = {};
     MODULE_ORDER.forEach((mod) => {
         matrix[mod] = { view: null, create: null, edit: null, delete: null, export: null };
@@ -40,7 +40,7 @@ function buildPermissionsMatrix() {
         actions: matrix[mod],
     }));
 }
-const PERMISSIONS_MATRIX = buildPermissionsMatrix();
+export const PERMISSIONS_MATRIX = buildPermissionsMatrix();
 
 export function RolesList({ roles }) {
     return (<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
