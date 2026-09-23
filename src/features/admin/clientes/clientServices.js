@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured, withMockDelay } from "@/shared/lib/supabase";
+import { api, isApiConfigured } from "@/shared/lib/api";
 import { ESTADO_USUARIO_OPTIONS } from "@/shared/constants/dbEnums";
 
 export const mockClientes = [
@@ -213,6 +214,19 @@ export const CLIENT_VIP_OPTIONS = [
 
 export const clientServices = {
   async fetchClientes() {
+    if (isApiConfigured) {
+      const data = await api.get("/clients");
+      return data.map((client) => ({
+        ...client,
+        ...(client.usuarios || {}),
+        nombre_completo: [client.usuarios?.nombre, client.usuarios?.apellido].filter(Boolean).join(" "),
+        nombre: client.usuarios?.nombre ?? "",
+        apellido: client.usuarios?.apellido ?? "",
+        correo: client.usuarios?.correo ?? "",
+        telefono: client.usuarios?.telefono ?? "",
+        estado: client.usuarios?.estado ?? "ACTIVO",
+      }));
+    }
     if (isSupabaseConfigured && supabase) {
       try {
         const { data, error } = await supabase

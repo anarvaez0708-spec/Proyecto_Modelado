@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured, withMockDelay } from "@/shared/lib/supabase.js";
+import { api, isApiConfigured } from "@/shared/lib/api";
 
 const SIMULATE_DELAY = 1500;
 
@@ -43,6 +44,14 @@ async function mockRegister(payload) {
 
 export const authServices = {
   login: async ({ correo, password, redirectTo = "/dashboard" }) => {
+    if (isApiConfigured) {
+      const data = await api.post("/auth/login", { email: correo, password });
+      const accessToken = data?.session?.access_token;
+      if (accessToken) window.localStorage.setItem("artetours_access_token", accessToken);
+      if (data?.user) window.localStorage.setItem("artetours_user", JSON.stringify(data.user));
+      window.location.href = redirectTo;
+      return data;
+    }
     if (isSupabaseConfigured) {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: correo,
@@ -56,6 +65,22 @@ export const authServices = {
   },
 
   register: async (payload) => {
+    if (isApiConfigured) {
+      const data = await api.post("/auth/register", {
+        email: payload.usuario.correo,
+        password: payload.usuario.password,
+        profile: {
+          nombre: payload.usuario.nombre,
+          apellido: payload.usuario.apellido,
+          telefono: payload.usuario.telefono,
+          estado: "ACTIVO",
+          rol: payload.usuario.rol,
+          turista: payload.turista,
+        },
+      });
+      window.location.href = "/login";
+      return data;
+    }
     if (isSupabaseConfigured) {
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: payload.usuario.correo,
@@ -109,6 +134,9 @@ export const authServices = {
   },
 
   forgotPassword: async (_email) => {
+    if (isApiConfigured) {
+      return api.post("/auth/forgot-password", { email: _email });
+    }
     if (isSupabaseConfigured) {
       const { error } = await supabase.auth.resetPasswordForEmail(_email);
       if (error) throw error;
@@ -135,6 +163,19 @@ export const authServices = {
 };
 
 export async function currentUser() {
+  if (isApiConfigured) {
+    const token = window.localStorage.getItem("artetours_access_token");
+    if (!token) return null;
+    try {
+      const user = await api.get("/auth/me");
+      window.localStorage.setItem("artetours_user", JSON.stringify(user));
+      return user;
+    } catch {
+      window.localStorage.removeItem("artetours_access_token");
+      window.localStorage.removeItem("artetours_user");
+      return null;
+    }
+  }
   if (isSupabaseConfigured) {
     const { data: { user }, error } = await supabase.auth.getUser();
     if (error) return null;

@@ -1,9 +1,10 @@
 import { supabase, isSupabaseConfigured, withMockDelay } from "@/shared/lib/supabase.js";
+import { api, isApiConfigured } from "@/shared/lib/api";
 
 export const USER_ROLE_OPTIONS = [
     { value: "1", label: "Administrador" },
     { value: "2", label: "Guía" },
-    { value: "3", label: "Recepcionista" },
+    { value: "3", label: "Turista" },
 ];
 
 export const USER_STATUS_OPTIONS = [
@@ -45,18 +46,18 @@ export const ALL_PERMISSIONS = [
 const ROLE_NAMES_BY_ID = {
     1: "Administrador",
     2: "Guía",
-    3: "Recepcionista",
+    3: "Turista",
 };
 
 export const mockUsers = [
     { id: 1, nombre: "Juan", apellido: "Pérez", correo: "juan@ejemplo.com", telefono: "+57 300 123 4567", rolIds: [1], estado: "ACTIVO", creado_en: "2024-01-15", ultimo_login: "2026-06-03 09:30", cargo: "Gerente General", departamento: "Administración", direccion: "Medellín, Colombia", roles: [{ id: 1, nombre: "Administrador" }] },
     { id: 2, nombre: "María", apellido: "González", correo: "maria@ejemplo.com", telefono: "+57 301 234 5678", rolIds: [2], estado: "ACTIVO", creado_en: "2024-02-20", ultimo_login: "2026-06-02 14:20", cargo: "Guía Senior", departamento: "Operaciones", direccion: "Medellín, Colombia", roles: [{ id: 2, nombre: "Guía" }] },
-    { id: 3, nombre: "Carlos", apellido: "Rodríguez", correo: "carlos@ejemplo.com", telefono: "+57 302 345 6789", rolIds: [3], estado: "INACTIVO", creado_en: "2024-03-10", ultimo_login: "2026-05-28 10:15", cargo: "Recepcionista", departamento: "Ventas", direccion: "Medellín, Colombia", roles: [{ id: 3, nombre: "Recepcionista" }] },
+    { id: 3, nombre: "Carlos", apellido: "Rodríguez", correo: "carlos@ejemplo.com", telefono: "+57 302 345 6789", rolIds: [3], estado: "INACTIVO", creado_en: "2024-03-10", ultimo_login: "2026-05-28 10:15", cargo: "Turista", departamento: "Experiencias", direccion: "Medellín, Colombia", roles: [{ id: 3, nombre: "Turista" }] },
     { id: 4, nombre: "Ana", apellido: "Martínez", correo: "ana@ejemplo.com", telefono: "+57 303 456 7890", rolIds: [2], estado: "ACTIVO", creado_en: "2024-04-05", ultimo_login: "2026-06-03 08:45", cargo: "Guía", departamento: "Operaciones", direccion: "Medellín, Colombia", roles: [{ id: 2, nombre: "Guía" }] },
     { id: 5, nombre: "Luis", apellido: "Sánchez", correo: "luis@ejemplo.com", telefono: "+57 304 567 8901", rolIds: [1], estado: "ACTIVO", creado_en: "2024-05-12", ultimo_login: "2026-06-03 11:00", cargo: "Administrador de Sistemas", departamento: "Administración", direccion: "Medellín, Colombia", roles: [{ id: 1, nombre: "Administrador" }] },
-    { id: 6, nombre: "Patricia", apellido: "López", correo: "patricia@ejemplo.com", telefono: "+57 305 678 9012", rolIds: [3], estado: "ACTIVO", creado_en: "2024-06-18", ultimo_login: "2026-06-02 16:30", cargo: "Jefe de Recepción", departamento: "Ventas", direccion: "Medellín, Colombia", roles: [{ id: 3, nombre: "Recepcionista" }] },
-    { id: 7, nombre: "Roberto", apellido: "Díaz", correo: "roberto@ejemplo.com", telefono: "+57 306 789 0123", rolIds: [2, 3], estado: "ACTIVO", creado_en: "2024-07-22", ultimo_login: "2026-06-01 12:00", cargo: "Guía / Recepcionista", departamento: "Operaciones", direccion: "Medellín, Colombia", roles: [{ id: 2, nombre: "Guía" }, { id: 3, nombre: "Recepcionista" }] },
-    { id: 8, nombre: "Sandra", apellido: "Torres", correo: "sandra@ejemplo.com", telefono: "+57 307 890 1234", rolIds: [3], estado: "BLOQUEADO", creado_en: "2024-08-30", ultimo_login: "2026-05-20 09:00", cargo: "Recepcionista", departamento: "Ventas", direccion: "Medellín, Colombia", roles: [{ id: 3, nombre: "Recepcionista" }] },
+    { id: 6, nombre: "Patricia", apellido: "López", correo: "patricia@ejemplo.com", telefono: "+57 305 678 9012", rolIds: [3], estado: "ACTIVO", creado_en: "2024-06-18", ultimo_login: "2026-06-02 16:30", cargo: "Turista", departamento: "Experiencias", direccion: "Medellín, Colombia", roles: [{ id: 3, nombre: "Turista" }] },
+    { id: 7, nombre: "Roberto", apellido: "Díaz", correo: "roberto@ejemplo.com", telefono: "+57 306 789 0123", rolIds: [2, 3], estado: "ACTIVO", creado_en: "2024-07-22", ultimo_login: "2026-06-01 12:00", cargo: "Guía / Turista", departamento: "Operaciones", direccion: "Medellín, Colombia", roles: [{ id: 2, nombre: "Guía" }, { id: 3, nombre: "Turista" }] },
+    { id: 8, nombre: "Sandra", apellido: "Torres", correo: "sandra@ejemplo.com", telefono: "+57 307 890 1234", rolIds: [3], estado: "BLOQUEADO", creado_en: "2024-08-30", ultimo_login: "2026-05-20 09:00", cargo: "Turista", departamento: "Experiencias", direccion: "Medellín, Colombia", roles: [{ id: 3, nombre: "Turista" }] },
 ];
 
 export const mockRoles = [
@@ -80,8 +81,8 @@ export const mockRoles = [
     },
     {
         id: 3,
-        nombre: "Recepcionista",
-        descripcion: "Gestión de reservas y clientes",
+        nombre: "Turista",
+        descripcion: "Consulta y reserva de experiencias",
         activo: true,
         permisosIds: [13, 14, 15, 17, 18],
         usuarios_asignados: 3,
@@ -230,6 +231,16 @@ export const userServices = {
     },
 
     async getUsers() {
+        if (isApiConfigured) {
+            const data = await api.get("/users");
+            return data.map((user) => normalizeUserFromDb({
+                ...user,
+                id: user.id_usuario,
+                creado_en: user.fecha_creacion,
+                ultimo_login: user.ultimo_acceso,
+                roles: (user.roles || []).map((nombre, index) => ({ id: index + 1, nombre })),
+            }));
+        }
         if (isSupabaseConfigured && supabase) {
             const { data, error } = await supabase
                 .from("usuarios")

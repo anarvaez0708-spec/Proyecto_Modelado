@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured, withMockDelay } from "@/shared/lib/supabase";
+import { api, isApiConfigured } from "@/shared/lib/api";
 import { ESTADO_TOUR_OPTIONS, ESTADO_SALIDA_OPTIONS } from "@/shared/constants/dbEnums";
 
 const TOURS_STORAGE_KEY = "artetours_mock_tours";
@@ -380,6 +381,7 @@ export function getTourReviewStats(tourId) {
 
 export const tourServices = {
     async fetchTours() {
+        if (isApiConfigured) return api.get("/tours");
         if (isSupabaseConfigured && supabase) {
             try {
                 const { data, error } = await supabase
@@ -396,6 +398,7 @@ export const tourServices = {
     },
 
     async createTour(payload) {
+        if (isApiConfigured) return api.post("/tours", payload);
         if (isSupabaseConfigured && supabase) {
             try {
                 const { data, error } = await supabase
@@ -418,6 +421,7 @@ export const tourServices = {
     },
 
     async updateTour(id_tour, payload) {
+        if (isApiConfigured) return api.put(`/tours/${id_tour}`, payload);
         if (isSupabaseConfigured && supabase) {
             try {
                 const { data, error } = await supabase
@@ -441,6 +445,10 @@ export const tourServices = {
     },
 
     async deleteTour(id_tour) {
+        if (isApiConfigured) {
+            await api.delete(`/tours/${id_tour}`);
+            return true;
+        }
         if (isSupabaseConfigured && supabase) {
             try {
                 const { error } = await supabase

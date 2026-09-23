@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured, withMockDelay } from "@/shared/lib/supabase";
+import { api, isApiConfigured } from "@/shared/lib/api";
 import { ESTADO_RESERVA_OPTIONS, ESTADO_USUARIO_OPTIONS, NATIONALITY_OPTIONS as SHARED_NATIONALITY_OPTIONS } from "@/shared/constants/dbEnums";
 import { mockClientes } from "@/features/admin/clientes/clientServices";
 import { mockSalidasTour, mockTours } from "@/features/admin/tours/tourServices";
@@ -297,6 +298,25 @@ export const SALIDA_OPTIONS = buildSalidaOptions();
 
 export const bookingServices = {
   async fetchReservas() {
+    if (isApiConfigured) {
+      const data = await api.get("/bookings");
+      return data.map((booking) => {
+        const user = booking.turistas?.usuarios ?? {};
+        const salida = booking.salidas_tour ?? {};
+        const tour = salida.tours ?? {};
+        return {
+          ...booking,
+          turista_nombre: [user.nombre, user.apellido].filter(Boolean).join(" "),
+          turista_correo: user.correo ?? "",
+          turista_telefono: user.telefono ?? "",
+          salida_tour_nombre: tour.nombre ?? "",
+          salida_fecha: salida.fecha_salida ?? "",
+          salida_hora: salida.hora_salida ?? "",
+          salida_cupos_disponibles: salida.cupos_disponibles ?? 0,
+          guia_nombre: "",
+        };
+      });
+    }
     if (isSupabaseConfigured && supabase) {
       try {
         const { data, error } = await supabase
